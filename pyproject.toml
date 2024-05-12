@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "fast_zero"
+version = "0.1.0"
+description = ""
+authors = ["K-dash <a@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.*"
+fastapi = "^0.111.0"
+ignr = "^2.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+pytest-cov = "^5.0.0"
+taskipy = "^1.12.2"
+ruff = "^0.4.4"
+httpx = "^0.27.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ruffのグローバル設定
+[tool.ruff]
+line-length = 79
+extend-exclude = ['migrations'] # Alembic migrations are not yet supported
+
+# linter
+[tool.ruff.lint]
+# I: isort
+# F: Pyflakes
+# E: Pycodestyle Error
+# W: Pycodestyle Warning
+# P: Pylint
+# PT: flake8-pytest-style
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+
+# formatter
+[tool.ruff.format]
+preview = true
+quote-style = 'double'
+
+# pytest設定
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = '-p no:warnings'  # 警告を表示しない
+
+# taskipyで各種コマンドのエイリアスを定義
+[tool.taskipy.tasks]
+lint = 'ruff check . && ruff check . --diff'
+format = 'ruff check . --fix && ruff format .'
+run = 'fastapi dev fast_zero/app.py'
+pre_test = 'task lint'  # test実行前にlintを実行
+test = 'pytest -s -x --cov=fast_zero -vv'   # カバレッジを取得する
+post_test = 'coverage html' # pytestの後に実行してcoverageを出力する
