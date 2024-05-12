@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fast_zero"
+name = "fast_todo"
 version = "0.1.0"
 description = ""
 authors = ["K-dash <a@gmail.com>"]
@@ -52,7 +52,7 @@ addopts = '-p no:warnings'  # 警告を表示しない
 [tool.taskipy.tasks]
 lint = 'ruff check . && ruff check . --diff'
 format = 'ruff check . --fix && ruff format .'
-run = 'fastapi dev fast_zero/app.py'
+run = 'fastapi dev fast_todo/app.py'
 pre_test = 'task lint'  # test実行前にlintを実行
-test = 'pytest -s -x --cov=fast_zero -vv'   # カバレッジを取得する
+test = 'pytest -s -x --cov=fast_todo -vv'   # カバレッジを取得する
 post_test = 'coverage html' # pytestの後に実行してcoverageを出力する
