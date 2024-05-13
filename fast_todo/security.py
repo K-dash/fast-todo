@@ -11,14 +11,14 @@ from zoneinfo import ZoneInfo
 
 from fast_todo.database import get_session
 from fast_todo.models import User
-from fast_todo.schema import TokenData
+from fast_todo.schemas import TokenData
+from fast_todo.settings import Settings
 
-SECRET_KEY = "dummy-secret"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+settings = Settings()
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 async def get_current_user(
@@ -32,7 +32,9 @@ async def get_current_user(
     )
 
     try:
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         username: str = payload.get("sub")
         if not username:
             raise credentials_exception
@@ -41,7 +43,7 @@ async def get_current_user(
         raise credentials_exception
 
     user = session.scalar(
-        select(User).where(User.username == token_data.username)
+        select(User).where(User.email == token_data.username)
     )
 
     if user is None:
@@ -53,10 +55,12 @@ async def get_current_user(
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(tz=ZoneInfo("Asia/Tokyo")) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     to_encode.update({"exp": expire})
-    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
