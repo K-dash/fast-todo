@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from fast_todo.app import app
 from fast_todo.database import get_session
 from fast_todo.models import User, table_registry
+from fast_todo.security import get_password_hash
 
 
 @pytest.fixture()
@@ -43,10 +44,26 @@ def session():
 
 @pytest.fixture()
 def user(session):
+    password = "secret"
     new_user = User(
-        username="johndoe", email="QpC7U@example.com", password="secret"
+        username="johndoe",
+        email="QpC7U@example.com",
+        # ハッシュ化されたパスワードをDBに保存する
+        password=get_password_hash(password),
     )
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
+
+    # モンキーパッチで平文のパスワードを返す
+    new_user.unhashed_password = password
     return new_user
+
+
+@pytest.fixture()
+def token(client, user):
+    response = client.post(
+        "/token",
+        data={"username": user.email, "password": user.unhashed_password},
+    )
+    return response.json().get("access_token")

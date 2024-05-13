@@ -70,10 +70,10 @@ def test_read_user_not_found(client):
     assert response.json() == {"detail": "User not found"}
 
 
-def test_update_user(client, user):
-    user_schema = UserPublic.model_validate(user).model_dump()
+def test_update_user(client, user, token):
     response = client.put(
-        f"/users/{user_schema.get('id')}",
+        f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "username": "hoge",
             "email": "QpC7U@example.com",
@@ -84,11 +84,11 @@ def test_update_user(client, user):
     assert response.json() == {
         "username": "hoge",
         "email": "QpC7U@example.com",
-        "id": 1,
+        "id": user.id,
     }
 
 
-def test_update_user_not_found(client):
+def test_update_user_parmission_denied(client):
     response = client.put(
         "/users/5",
         json={
@@ -97,18 +97,31 @@ def test_update_user_not_found(client):
             "password": "new secret",
         },
     )
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"detail": "Not authenticated"}
 
 
-def test_delete_user(client, user):
-    user_schema = UserPublic.model_validate(user).model_dump()
-    response = client.delete(f"/users/{user_schema.get('id')}")
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
 
 
 def test_delete_user_not_found(client):
     response = client.delete("/users/5")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        "/token",
+        data={"username": user.email, "password": user.unhashed_password},
+    )
+    token = response.json()
+    assert response.status_code == HTTPStatus.OK
+    assert "access_token" in token
+    assert "token_type" in token
