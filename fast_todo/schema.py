@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class Message(BaseModel):
@@ -17,10 +17,9 @@ class UserPublic(BaseModel):
     id: int
     username: str
     email: EmailStr
-
-
-class UserDB(UserSchema):
-    id: int
+    # UserPublicのインスタンスを辞書で出力できるようにConfigDictを定義
+    # from_attributes=True: スキーマに含まれていない属性があっても検証OKにする
+    model_config = ConfigDict(from_attributes=True)
 
 
 # users response_model
