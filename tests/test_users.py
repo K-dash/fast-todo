@@ -81,7 +81,8 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_user_parmission_denied(client):
+def test_update_user_not_authenticated(client):
+    # 存在しないユーザーを渡した場合
     response = client.put(
         "/users/5",
         json={
@@ -94,6 +95,21 @@ def test_update_user_parmission_denied(client):
     assert response.json() == {"detail": "Not authenticated"}
 
 
+def test_update_user_paramission_denied(client, other_user, token):
+    # tokenに含まれないユーザーを渡した場合
+    response = client.put(
+        f"/users/{other_user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "username": "bob",
+            "email": "bob@example.com",
+            "password": "mynewpassword",
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {"detail": "Not enough permissions"}
+
+
 def test_delete_user(client, user, token):
     response = client.delete(
         f"/users/{user.id}",
@@ -103,7 +119,16 @@ def test_delete_user(client, user, token):
     assert response.json() == {"message": "User deleted"}
 
 
-def test_delete_user_not_found(client):
+def test_delete_user_not_authenticated(client):
     response = client.delete("/users/5")
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {"detail": "Not authenticated"}
+
+
+def test_delete_user_paramission_denied(client, other_user, token):
+    response = client.delete(
+        f"/users/{other_user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {"detail": "Not enough permissions"}
