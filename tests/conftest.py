@@ -1,4 +1,5 @@
 # pytestによって自動的に読み込まれるので、testファイル内でimport不要
+import factory
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -9,6 +10,15 @@ from fast_todo.app import app
 from fast_todo.database import get_session
 from fast_todo.models import User, table_registry
 from fast_todo.security import get_password_hash
+
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f"user{n}")
+    email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
+    password = factory.LazyAttribute(lambda o: f"{o.username}secret")
 
 
 @pytest.fixture()
@@ -45,19 +55,27 @@ def session():
 @pytest.fixture()
 def user(session):
     password = "secret"
-    new_user = User(
-        username="johndoe",
-        email="QpC7U@example.com",
-        # ハッシュ化されたパスワードをDBに保存する
-        password=get_password_hash(password),
-    )
-    session.add(new_user)
+    user = UserFactory(password=get_password_hash(password))
+    session.add(user)
     session.commit()
-    session.refresh(new_user)
+    session.refresh(user)
 
     # モンキーパッチで平文のパスワードを返す
-    new_user.unhashed_password = password
-    return new_user
+    user.unhashed_password = password
+    return user
+
+
+@pytest.fixture()
+def other_user(session):
+    password = "secret2"
+    user = UserFactory(password=get_password_hash(password))
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    # モンキーパッチで平文のパスワードを返す
+    user.unhashed_password = password
+    return user
 
 
 @pytest.fixture()
