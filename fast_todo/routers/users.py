@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from fast_todo.models import User
@@ -20,17 +20,24 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", status_code=HTTPStatus.CREATED, response_model=UserPublic)
-# Dependsにget_sessionを渡す（依存性の注入）
-def create_user(user: UserSchema, session: Session):  # type: ignore
+def create_user(user: UserSchema, session: Session):
     db_user = session.scalar(
-        select(User).where(User.username == user.username)
+        select(User).where(
+            or_(User.username == user.username, User.email == user.email)
+        )
     )
 
     if db_user:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail="Username already exists",
-        )
+        if db_user.username == user.username:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="Username already exists",
+            )
+        elif db_user.email == user.email:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="Email already exists",
+            )
     hashed_password = get_password_hash(user.password)
 
     db_user = User(
