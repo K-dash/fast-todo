@@ -34,6 +34,20 @@ def test_create_user_existing_username(client, user):
     assert response.json() == {"detail": "Username already exists"}
 
 
+def test_create_user_existing_email(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.post(
+        "/users/",
+        json={
+            "username": "new_user_name",
+            "email": f'{user_schema.get("email")}',
+            "password": "secret",
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {"detail": "Email already exists"}
+
+
 def test_read_users(client):
     response = client.get("/users/")
     assert response.status_code == HTTPStatus.OK
