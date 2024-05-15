@@ -4,12 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
 
 from fast_todo.app import app
 from fast_todo.database import get_session
 from fast_todo.models import User, table_registry
 from fast_todo.security import get_password_hash
+from fast_todo.settings import Settings
 
 
 class UserFactory(factory.Factory):
@@ -35,20 +35,18 @@ def client(session):
 
 @pytest.fixture()
 def session():
-    # メモリを保存先にすることで、
-    # データベースを使用した場合よりも高速にテストが可能となる
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    # TODO: 今のままだとProduction環境のDBを使っているので、
+    # テスト用のDBを用意するか、テストはCI限定にするかどうか検討
+    engine = create_engine(Settings().DATABASE_URL)
     # sessionを作成する前にテスト用データベースにすべてのテーブルを作成する
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
         yield session
 
-    # 各テストケースの終了時に都度データベースを破棄する
+    # TODO: 今のままだとProduction環境のDBを使っているので、
+    # 手元の開発環境でテストを実行すると、
+    # drop_allで本番データも消えてしまう
     table_registry.metadata.drop_all(engine)
 
 
