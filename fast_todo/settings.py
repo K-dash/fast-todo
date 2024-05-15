@@ -6,7 +6,9 @@ class Settings(BaseSettings):
         # 環境変数を.envから渡すようにした
         # Settingsクラスに定義されていないFieledも渡せるように
         # extra="ignore"を追加
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     DATABASE_URL: str

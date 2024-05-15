@@ -5,7 +5,15 @@ jobs:
     test:
         runs-on: ubuntu-latest
         steps:
-            - name: Instalar o python
+            - name: Install python
               uses: actions/setup-python@v5
               with:
                   python-version: "3.11"
+            - name: Install poetry
+              run: pipx install poetry
+            
+            - name: Install dependencies
+              run: poetry install
+            
+            - name: Excecute tests
+              run: poetry run task test
