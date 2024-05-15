@@ -22,7 +22,7 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: Copia os arquivos do repositório
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install python
@@ -33,7 +33,7 @@ jobs:
       - name: Install poetry
         run: pipx install poetry
 
-      - name: Install dependencys
+      - name: Install dependencies
         run: poetry install
 
       - name: Execute tests
